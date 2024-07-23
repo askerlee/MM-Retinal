@@ -100,7 +100,7 @@ class KeepFITModel(torch.nn.Module):
             print("Missing keys:", ret.missing_keys)
         if ret.unexpected_keys:
             print("Unexpected keys:", ret.unexpected_keys)
-            
+
         print('load model weight from:', weights_path)
 
     #########################################
@@ -564,19 +564,18 @@ class KeepFITModel(torch.nn.Module):
     #########################################
     # 模型推理模块  prediction
     #########################################
-    def forward(self, image, text):
+    def forward(self, image, text, do_preprocess_image=True):
         self.eval()
-        # 输入数据预处理  pre process
-        image = self.preprocess_image(image)
+        if do_preprocess_image:
+            image = self.preprocess_image(image)
         text_input_ids, text_attention_mask = self.preprocess_text(text)
 
-        with torch.no_grad():
-            img_embeds = self.vision_model(image)
-            text_embeds = self.text_model(text_input_ids, text_attention_mask)
-            logits = self.compute_logits(img_embeds, text_embeds).t()
-            probs = logits.softmax(dim=-1)
+        img_embeds = self.vision_model(image)
+        text_embeds = self.text_model(text_input_ids, text_attention_mask)
+        logits = self.compute_logits(img_embeds, text_embeds).t()
+        probs = logits.softmax(dim=-1)
 
-        return probs.cpu().numpy(), logits.cpu().numpy()
+        return probs, logits
 
     # 图像预处理  img preprocess
     def preprocess_image(self, image):
